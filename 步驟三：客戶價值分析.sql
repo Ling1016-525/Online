@@ -1,49 +1,11 @@
 -- 4. 客戶價值分析 (RFM Model)
 
 /*
-為什麼要這樣寫？不用 NOW() 嗎？因為這張 online_clean 資料集可能是好幾年前的歷史資料
+為什麼要這樣寫？不用 NOW() 嗎？因為這張 online_clean 資料集是好幾年前的歷史資料
 （例如 2010 或 2011 年的電商公開資料）。如果用 NOW()（2026年）去減，
 算出來的 Recency 每個人都是四千多天，分析就失去意義了。所以寫這段語法的人非常聰明，
 他用「商店營業的最後一天」來假裝是「今天」，這樣算出來的 Recency 
 才是最符合歷史情境的正確天數！
-*/
-/*
-WITH Yearly_Max_Date AS (
-    SELECT 
-        DATE_FORMAT(STR_TO_DATE(InvoiceDate, '%Y-%m-%d %H:%i:%s'), '%Y') AS InvoiceYear,
-        MAX(STR_TO_DATE(InvoiceDate, '%Y-%m-%d %H:%i:%s')) AS MaxYearDate
-    FROM online_clean
-    GROUP BY DATE_FORMAT(STR_TO_DATE(InvoiceDate, '%Y-%m-%d %H:%i:%s'), '%Y')
-),
-Customer_RFM_Yearly AS (
-    SELECT 
-        DATE_FORMAT(STR_TO_DATE(o.InvoiceDate, '%Y-%m-%d %H:%i:%s'), '%Y') AS InvoiceYear,
-        o.CustomerID,
-        DATEDIFF(m.MaxYearDate, MAX(STR_TO_DATE(o.InvoiceDate, '%Y-%m-%d %H:%i:%s'))) AS Recency,
-        COUNT(DISTINCT o.InvoiceNo) AS Frequency,
-        ROUND(SUM(o.Quantity * o.UnitPrice), 2) AS Monetary
-    FROM online_clean as o
-    JOIN Yearly_Max_Date as m 
-        ON DATE_FORMAT(STR_TO_DATE(o.InvoiceDate, '%Y-%m-%d %H:%i:%s'), '%Y') = m.InvoiceYear
-    WHERE o.CustomerID IS NOT NULL AND o.CustomerID != ''
-    GROUP BY DATE_FORMAT(STR_TO_DATE(o.InvoiceDate, '%Y-%m-%d %H:%i:%s'), '%Y'), o.CustomerID, m.MaxYearDate
-)
-SELECT 
-    InvoiceYear AS '年份',
-    CustomerID AS '客戶ID',
-    Recency AS 'R_近利度',
-    Frequency AS 'F_頻次',
-    Monetary AS 'M_金額',
-    ROUND((Monetary / SUM(Monetary) OVER(PARTITION BY InvoiceYear)) * 100, 2) AS '該年營收占比(%)',
-    CASE 
-        WHEN Frequency >= 10 AND Monetary >= 5000 THEN '核心 VIP 客戶'
-        WHEN Recency <= 30 AND Frequency >= 3 THEN '高潛力新客戶'
-        WHEN Recency > 180 AND Frequency >= 3 THEN '易流失老客戶'
-        WHEN Recency > 180 AND Frequency <=> 1 THEN '已流失低價值客戶'
-        ELSE '一般常客'
-    END AS '客戶分群'
-FROM Customer_RFM_Yearly
-ORDER BY InvoiceYear DESC, Monetary DESC;
 */
 
 WITH Yearly_Max_Date AS (
